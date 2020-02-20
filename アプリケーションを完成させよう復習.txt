@@ -1,0 +1,342 @@
+『1章【CARAVANに機能を追加しよう】復習』
+・アプリケーションのひな形を準備する
+
+・カレントディレクトリを/CARAVANに移動
+$ rails new CARAVAN
+
+・モデルを設定する($ rails g model モデル名)
+→モデルとテーブルを同時に作成する
+$ rails g model モデル名 カラム名1:データ型1 カラム名2:データ型2 ...
+ex)$ rails g model Blog title:string category:string body:text　
+
+・マイグレーションをデータベースに反映する
+$ rails db:migrate
+
+・完成ページを確認と流れ(結局こういう感じで作ればいい)
+Topページ→投稿詳細ページ→投稿フォーム→編集フォームページ
+
+
+『2章【TOPページを作ろう】復習』
+コントローラを作成する
+・アクションも同時に作成する
+CARAVANサイトで必要なアクションは、以下の7つです。
+
+index（記事一覧＋Topページ）
+show（詳細表示ページ）
+new（新規投稿ページ）
+create（記事を保存する）
+edit（記事編集ページ）
+update（記事を更新する）
+destroy（記事を削除する
+
+このうち、Viewを使うアクションは、以下の4つです。
+
+index
+show
+new
+edit
+
+・ rails g controller blogs index show new edit
+
+・resourcesでルーティングを設定する
+下記の4つのget行を削除してください。
+
+get 'blogs/index'
+get 'blogs/show'
+get 'blogs/new'
+get 'blogs/edit'
+
+config/routes.rb
+Rails.application.routes.draw do
+  # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
+  resources :blogs
+end
+
+・ルーティングを確認する
+$ rails routes
+
+・app/views/blogs/index.html.erbにHTMLを記述する
+
+・app/assets/stylesheets/application.cssにCSSを記述する
+
+・app/views/layouts/application.html.erbにHTMLを記述する
+app/views/layouts/application.html.erb
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CARAVAN</title>
+    <%= csrf_meta_tags %>
+    <%= stylesheet_link_tag    'https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css'  %>
+    <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
+    <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
+  </head>
+ 
+  <body>
+    <%= yield %>
+  </body>
+</html>
+
+・画像用フォルダを作成する
+→app/assets/imagesフォルダにimgフォルダを作成し、その中に画像を保存
+
+・$ rails s -b 0.0.0.0
+
+
+『3章【投稿機能を作ろう】』
+・createアクションを追加する
+class BlogsController < ApplicationController
+ 
+  def show
+  end
+ 
+  def index
+  end
+ 
+  def new
+  end
+ 
+  def create
+  end
+ 
+  def edit
+  end
+ 
+end
+
+・フォームを表示する
+→空のインスタンスをViewに渡す
+app/controllers/blogs_controller.rb
+class BlogsController < ApplicationController
+    
+　　...
+   
+    def new
+        @blog = Blog.new
+    end
+    
+    ...
+ 
+end
+
+→投稿フォームを表示する
+app/views/blogs/new.html.erb
+<h1>新規投稿</h1>
+<!-- form_for部分 -->
+<%= form_for(@blog) do |f| %>
+ 
+    <h4>タイトル</h4>
+    <%= f.text_field :title %>
+ 
+    <h4>カテゴリー</h4>
+    <%= f.text_field :category %>
+ 
+    <h4>本文</h4>
+    <%= f.text_area :body %>
+ 
+    <%= f.submit '投稿' %>
+ 
+<% end %>
+
+・データを保存する
+→Strong Parametersを定義する
+params.require(:モデル名).permit(:カラム名1, :カラム名2, ...)
+→処理を追加する
+app/controllers/blogs_controller.rb
+class BlogsController < ApplicationController
+   
+　　...
+  
+    def create
+        blog = Blog.new(blog_params)
+        blog.save
+        redirect_to blogs_path
+    end
+ 
+    private
+    def blog_params
+      params.require(:blog).permit(:title, :category, :body)
+    end
+  end
+
+・動作を確認する
+
+
+『4章【Blog部分を書き換えよう】』
+・投稿データを取得する
+app/controllers/blogs_controller.rb
+class BlogsController < ApplicationController
+  def show
+  end
+ 
+  def index
+    # 記事を全件取得
+    @blogs = Blog.all
+  end
+ ...
+end
+
+・Topページ用のViewを作成する
+
+・app/views/blogs/index.html.erbにループ処理に書き換える
+
+
+『5章【詳細ページを作ろう】復習』
+・showアクションを作成する
+app/controllers/blogs_controller.rb
+class BlogsController < ApplicationController
+  def show
+    @blog = Blog.find(params[:id])
+  end
+ 
+...
+ 
+end
+
+・app/views/blogs/show.html.erbに詳細ページに貼り付けてください。
+
+・投稿を表示する
+→以下のように書き換える
+app/views/blogs/show.html.erb
+<section class="single-blog">
+  <h2 class="blog-headline">Blog</h2>
+  <section class="blog-box">
+    <h3 class="blog-box-headline">
+      <%= @blog.title %>
+    </h3>
+    <div class="blog-box-content">
+      <p class="category">
+        <%= @blog.category %>
+      </p>
+      <p class="blog-date">
+        <%= @blog.created_at %>
+      </p>
+    </div>
+    <%= image_tag "img/forest.jpg", class:"single-image" %>
+    <p class="single-text">
+      <%= @blog.body %>
+    </p>
+    <a href="#">編集</a>
+    <a href="#">削除</a>
+    <div class="author-case clearfix">
+      <div class="author-image"></div>
+      <div class="author-box">
+        <p class="author-name">By JOHN SMITH / Photographer</p>
+        <p class="author-text">His black and white landscapes, often captured at times<br>
+        of the day and night when the light is fleeting, or in poor<br>
+        weather conditions, such as rain, fog, or snow, are<br>reminiscent of the calm in a storm all with an ethereal<br>quality. </p>
+      </div>
+    </div>
+  </section>
+</section>
+
+
+
+『6章【編集機能を作ろう】復習』
+・editアクションを作成する
+app/controllers/blogs_controller.rb
+class BlogsController < ApplicationController
+    
+	...
+	
+    def edit
+        @blog = Blog.find(params[:id])
+    end
+    
+	...
+	
+end
+
+・編集フォームを作成する
+app/views/blogs/edit.html.erb
+<h1>編集画面</h1>
+<!-- form_for部分 -->
+<%= form_for(@blog) do |f| %>
+    <h4>タイトル</h4>
+    <%= f.text_field :title %>
+    <h4>カテゴリー</h4>
+    <%= f.text_field :category %>
+    <h4>本文</h4>
+    <%= f.text_area :body %>
+    <%= f.submit '保存' %>
+<% end %>
+
+・updateアクションを追加する
+app/controllers/blogs_controller.rb
+...
+ 
+def edit
+    @blog = Blog.find(params[:id])
+end
+ 
+def update
+    blog = Blog.find(params[:id])
+    blog.update(blog_params)
+    redirect_to blog_path(blog)
+end
+ 
+...
+
+・詳細画面にリンクを追加する
+app/views/blogs/show.html.erb
+...
+ 
+<p class="single-text">
+    <%= @blog.body %>    
+</p>
+<!-- 編集部分 -->
+<%= link_to "編集", edit_blog_path(@blog) %>
+ 
+...
+
+・動作を確認する
+
+
+『7章【削除機能を作ろう】復習』
+・destroyアクションを追加する
+app/controllers/blogs_controller.rb
+class BlogsController < ApplicationController
+ 
+ ...
+ 
+    def destroy
+ 
+ ...
+ 
+    end
+ 
+ ...
+ 
+end
+
+・データ削除処理を追加する
+app/controllers/blogs_controller.rb
+class BlogsController < ApplicationController
+ 
+ ...
+ 
+    def destroy	
+        blog = Blog.find(params[:id])
+        blog.destroy
+        redirect_to blogs_path
+    end
+ 
+ ...
+ 
+end
+
+・詳細画面へ削除リンクを追加
+→削除リンクを設定する
+→link_toのHTTPメソッドを変更する
+app/views/blogs/show.html.erb
+...
+<p class="single_text">
+    <%= @blog.body %>    
+</p>
+ 
+<%= link_to "編集", edit_blog_path(@blog) %>
+<!-- 追加部分 -->
+<%= link_to "削除", blog_path(@blog), method: :delete %>
+ 
+...
+
+・動作を確認する

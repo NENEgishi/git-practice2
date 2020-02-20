@@ -1,0 +1,97 @@
+3章～7章のサブライムまとめ
+『routes.rb』
+Rails.application.routes.draw do
+	get 'todolists/new'
+	get 'top'=>'homes#top'
+	post 'todolists'=>'todolists#create'
+	get 'todolists'=>'todolists#index'
+	get 'todolists/:id'=>'todolists#show',as:'todolist'
+	get 'todolists/:id/edit'=>'todolists#edit',as:'edit_todolist'
+	patch 'todolists/:id'=>'todolists#update',as:'update_todolist'
+	delete 'todolists/:id'=>'todolists#destroy',as:'destroy_todolist'
+  # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
+end
+
+
+『homes_controller.rb』
+class TodolistsController < ApplicationController
+	def new
+		@list=List.new
+	end
+	def create
+		list=List.new(list_params)
+		list.save
+		redirect_to todolist_path(list.id)
+	end
+	def index
+		@lists=List.all
+	end
+	def show
+		@list=List.find(params[:id])
+	end
+	def edit
+		@list=List.find(params[:id])
+	end
+	def update
+		list=List.find(params[:id])
+		list.update(list_params)
+		redirect_to todolist_path(list.id)
+	end
+	def destroy
+		list=List.find(params[:id])
+		list.destroy
+		redirect_to todolists_path
+	end
+	private
+	def list_params
+		params.require(:list).permit(:title,:body,:image)
+	end
+end
+
+
+『top.html.erb』
+<h1>こちらはTopページです</h1>
+
+
+『new.html.erb』
+<h1>新規投稿</h1>
+<%=form_for(@list,url:'/todolists') do |f|%>
+	<h4>タイトル</h4>
+	<%=f.text_field :title%>
+	<h4>本文</h4>
+	<%=f.text_area :body%>
+	<%=f.submit '投稿' %>
+<%end%>
+
+
+『index.html.erb』
+<h1>投稿一覧</h1>
+<%@lists.each do |list|%>
+	<p>タイトル</p>
+	<span><%=link_to list.title,todolist_path(list.id)%></span>
+	<p>画像</p>
+	<%=attachment_image_tag list,:image,:fill,100,100,format:'jpeg'%>
+<%end%>
+
+
+『show.html.erb』
+<h2>タイトル</h2>
+<p><%=@list.title%></p>
+<h2>本文</h2>
+<p><%=@list.body%></p>
+<h2>画像</h2>
+<%=attachment_image_tag @list,:image,:fill,300,300,format:'jpeg'%>
+<%=link_to"編集",edit_todolist_path(@list.id)%>
+
+<%=link_to"削除",destroy_todolist_path(@list.id),method: :delete,"data-confirm" => "本当に削除しますか？" %>
+
+
+『edit.html.erb』
+<h1>編集画面</h1>
+<%=form_for(@list,url:"/todolists/#{@list.id}") do |f|%>
+	<h4>タイトル</h4>
+	<%=f.text_field :title%>
+	<h4>本文</h4>
+	<%=f.text_area :body%>
+	<%=f.submit '保存' %>
+<%end%>

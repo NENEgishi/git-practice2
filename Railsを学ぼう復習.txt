@@ -1,0 +1,659 @@
+『3章【Railsでアプリケーションを開発しよう】復習』
+仮想環境のディレクトリへ移動する
+・$ cd Desktop/work/vagrant
+
+仮想環境を起動する（vagrant up）
+・$ vagrant up
+
+仮想環境へSSH接続する
+・$ vagrant ssh
+
+共有フォルダに移動する
+・$ cd /vagrant
+
+Vagrantの作業を終了するには...
+仮想環境からのログアウト
+・$ exit
+仮想環境のシャットダウン
+・$ vagrant halt
+Vagrantを休止
+・$ vagrant suspend
+
+Railsアプリのひな形を作成する（rails new）
+・$ rails new アプリケーション名
+ex)$ rails new sample_app
+
+アプリーケーションを削除するには
+・ rm -rf アプリケーション名
+ex)$ rm -rf sample_app
+
+コントローラを作成する
+・$ rails g controller コントローラ名　
+ex)$ rails g controller homes
+
+コントローラの作成を間違えた場合は
+$ rails d controller homus
+
+コントローラ内にアクションを追加する...
+コントローラのファイルを開く
+・homesコントローラ内のファイル（homes_controller.rbファイル）を開きます。
+
+topアクションを定義する
+def top 
+end
+
+ルーティングを設定する
+・configフォルダ内のroutes.rbファイルに記述します。routes.rbファイルは、Railsアプリを作成するときに自動作成されるファイルです。
+
+ルーティングを記述する
+Rails.application.routes.draw do
+ 　　
+  get 'top' => 'homes#top'
+end
+
+Viewファイルを作成する
+・top.html.erb　　　
+→Textでは、「homes」上で右クリックし、表示されるメニューで
+「New File」を選択することで、新規ファイルを作成できます。
+→『<h1>ここはTopページです</h1>』と記述する。
+
+railsサーバを起動する
+・$ rails s -b 0.0.0.0
+
+・起動したアプリケーションにアクセスする
+
+
+『4章【モデルとデータベースを用意しよう】復習』
+モデルを作成する
+・$ rails g model モデル名
+ex)$ rails g model List
+→rails g modelコマンドを実行すると、4つのファイルが生成される。
+db/migrate/（作成日時）_create_lists.rb……マイグレーションファイルというデータベースの設計図になるファイルです。
+app/models/list.rb…………モデルクラスはデータベースに対応したRubyのクラスです。
+test/models/list_test.rb……モデルクラスのテストコードのひな形です。
+test/fixtures/lists.yml………テストデータ作成のためのひな形です。
+
+マイグレーションファイルを編集する
+db/migrate/（作成日時）_create_lists.rb
+class CreateLists < ActiveRecord::Migration[5.0]
+ 
+    def change        
+        create_table :lists do |t|
+        # 以下の2行を追加
+            t.string :title
+            t.string :body
+            t.timestamps
+        end
+    end
+end
+
+マイグレーションでデータベースへ反映する
+・$ rails db:migrate
+
+カラムの追加／削除の方法...
+カラムの追加コマンド
+・$ rails g migration Addカラム名Toテーブル名 カラム名:型名
+ex)$ rails g migration AddNameToLists name:string→$ rails db:migrate
+
+カラムの削除コマンド
+・$ rails g migration Removeカラム名Fromテーブル名 カラム名:型名
+ex$ rails g migration RemoveNameFromLists name:string)
+→$ rails db:migrate
+
+
+『5章【投稿機能を作ろう】復習』
+投稿までの処理の流れ
+1.フォーム画面を表示する
+2.フォームにデータを入力し、送信する
+3.送信内容をデータベースへ保存する
+4.リダイレクトする
+
+コントローラと投稿機能のアクションを作成する
+・rails g controller コントローラ名 アクション名
+ex)$ rails g controller todolists new
+
+フォームを作成する...
+form_forヘルパー
+app/controllers/todolists_controller.rb　
+class TodolistsController < ApplicationController 
+    def new
+        # Viewへ渡すためのインスタンス変数に空のモデルオブジェクトを生成する
+        @list = List.new
+　　end
+end
+
+フォームオブジェクトを作成する 
+app/views/todolists/new.html.erb
+<h1>新規投稿</h1>
+<!-- form_for部分 -->
+<%= form_for(@list, url: '/todolists') do |f| %>
+ 
+    <h4>タイトル</h4>
+    <%= f.text_field :title %>
+ 
+    <h4>本文</h4>
+    <%= f.text_area :body %>
+ 
+    <%= f.submit '投稿' %>
+ 
+<% end %>
+
+フォームで入力したデータの送信先を決める
+・ルーティングを追加する
+config/routes.rb
+Rails.application.routes.draw do
+  get 'todolists/new'
+ 
+  # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
+ 
+  get 'top' => 'homes#top'
+ 
+  post 'todolists' => 'todolists#create'
+end
+
+・createアクションを追加する
+app/controllers/todolists_controller.rb
+class TodolistsController < ApplicationController
+ 
+    def new
+         @list = List.new
+    end
+    
+    # 以下を追加
+    def create
+        # ストロングパラメーターを使用
+         list = List.new(list_params)
+        # DBへ保存する
+         list.save
+        # トップ画面へリダイレクト
+        redirect_to '/top'
+    end
+    private
+   
+    def list_params
+        params.require(:list).permit(:title, :body)
+    end
+ 
+end
+
+・$ rails s -b 0.0.0.0
+
+
+『6章【閲覧機能を作ろう】復習』
+・投稿一覧ページを作成する
+config/routes.rb
+Rails.application.routes.draw do
+      # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
+      get 'todolists/new'
+      get 'top' => 'homes#top'
+      post 'todolists' => 'todolists#create'
+  
+  
+     get 'todolists' => 'todolists#index'
+end
+
+・indexアクションを追加する
+app/controllers/todolists_controller.rb
+class TodolistsController < ApplicationController
+  
+  ...
+  
+    def index 
+    end
+    
+    private
+  
+  ...
+  
+  end 
+
+・すべての投稿を取り出して表示する
+app/controllers/todolists_controller.rb
+class TodolistsController < ApplicationController
+  
+  ... 
+  
+      def index
+          @lists = List.all
+      end
+      
+      private
+  
+  ...
+  
+  end
+
+・Viewファイルを作成する
+→app/views/todolistsフォルダ内に、index.html.erbファイルを作成します。
+todolists上で右クリックし、表示されるメニューの「New File」を選択して
+作成します。
+app/views/todolists/index.html.erb
+ <h1>投稿一覧</h1>
+   <% @lists.each do |list| %>
+      <p>タイトル</p>
+      <span><%= list.title %></span>
+   <% end %>
+
+・$ rails s -b 0.0.0.0
+
+詳細ページを作成する
+・投稿1件ごとに詳細を表示する
+config/routes.rb
+ Rails.application.routes.draw do
+  
+  ...
+  
+      get 'todolists/:id' => 'todolists#show', as: 'todolist'
+      # .../todolists/1 や .../todolists/3 に該当する
+  
+  end  
+
+・showアクションを定義する
+class TodolistsController < ApplicationController
+  
+  ...
+  
+      def show
+      end
+  
+      private
+  
+  ...
+  
+  end
+
+・URL内のidをコントローラで受け取る
+app/controllers/todolists_controller.rb
+class TodolistsController < ApplicationController
+  
+  ...
+  
+      def show
+  
+          @list = List.find(params[:id]) 
+        end
+  
+      private
+  
+  
+  ...
+  
+  end
+
+詳細ページを作成する
+・Viewファイルを作成する（2）
+→次に、app/views/todolistsフォルダに、show.html.erbファイルを作成します。
+
+・レコード1件の情報を表示する
+app/views/todolists/show.html.erb
+<h2>タイトル</h2>
+<p><%= @list.title %></p>
+<h2>本文</h2>
+<p><%= @list.body %></p>
+
+・$ rails s -b 0.0.0.0
+
+・詳細ページへのリンクを設定する
+app/views/todolist/index.html.erb
+<h1>投稿一覧</h1>
+<% @lists.each do |list| %>
+  <p>タイトル</p>
+  <span>
+  
+    <%=link_to list.title, "/todolists/#{list.id}" %>
+  </span>
+<% end %>
+
+・$ rails s -b 0.0.0.0
+
+・link_toのURLを名前付きルートに書き換える
+app/views/todolist/index.html.erb
+<h1>投稿一覧</h1>
+  <% @lists.each do |list| %>
+  <p>タイトル</p>
+      <span>
+          <%=link_to list.title, todolist_path(list.id) %>
+      </span>
+  <% end %>
+
+変更前
+<%=link_to list.title, "/todolists/#{list.id}" %>
+
+変更後
+<%=link_to list.title, todolist_path(list.id) %>
+
+・リダイレクト先を変更する
+app/controllers/todolists_controller.rb
+ class TodolistsController < ApplicationController
+  
+  ...
+  
+      def create
+        list = List.new(list_params)
+        list.save # データベースへ保存する
+  
+        redirect_to todolist_path(list.id) # 詳細画面へリダイレクト
+        end
+  
+      private
+  
+  ...
+  
+  end
+
+
+『7章【編集機能を作ろう】復習』
+・編集用のページを作成する
+config/routes.rb
+Rails.application.routes.draw do
+  
+  ...
+  
+  get 'todolists/:id/edit' => 'todolists#edit', as: 'edit_todolist'
+  
+end
+
+・編集対象のデータをViewに渡す
+app/controllers/todolists_controller.rb
+class TodolistsController < ApplicationController
+    def new
+        @list = List.new
+    end
+    def create
+        list = List.new(list_params)
+        list.save
+        redirect_to todolist_path(list.id)
+    end
+    def index
+        @lists = List.all
+    end
+    def show
+        @list = List.find(params[:id])
+    end
+    def edit
+        @list = List.find(params[:id])
+    end
+ 
+    private
+    def list_params
+        params.require(:list).permit(:title, :body)
+    end
+end
+
+・edit.html.erbファイルを作成する
+→app/views/todolistsフォルダに、edit.html.erbファイルを作成します
+
+・編集対象のデータを表示する
+app/views/todolists/edit.html.erb
+<h1>編集画面</h1>
+<%= form_for(@list, url:"/todolists/#{@list.id}") do |f| %>
+    <h4>タイトル</h4>
+    <%= f.text_field :title %>
+    <h4>本文</h4>
+    <%= f.text_area :body %>
+    <%= f.submit '保存' %>    
+<% end %>
+
+・編集内容を送信して保存する
+→投稿を更新するためのupdateアクションを作成
+app/controllers/todolists_controller.rb
+class TodolistsController < ApplicationController
+    def new
+        @list = List.new
+    end
+    def create
+        list = List.new(list_params)
+        list.save
+        redirect_to todolist_path(list.id)
+    end
+    def index
+        @todolists = List.all
+    end
+    def show
+        @list = List.find(params[:id])
+    end
+    def edit
+        @list = List.find(params[:id])
+    end
+    def update
+        list = List.find(params[:id])
+        list.update(list_params)
+        redirect_to todolist_path(list.id)
+    end
+ 
+    private
+    def list_params
+        params.require(:list).permit(:title, :body)
+    end
+end
+
+・updateアクションのルーティングを追加する
+config/routes.rb
+Rails.application.routes.draw do
+  ...
+
+  patch 'todolists/:id' => 'todolists#update', as: 'update_todolist'
+end
+
+・編集ページへのリンクを設定する
+app/views/todolists/show.html.erb
+  <h2>タイトル</h2>
+  <p><%=@list.title %></p>
+  <h2>本文</h2>
+  <p><%=@list.body %></p>
+  
+<%= link_to "編集", edit_todolist_path(@list.id) %> 
+
+
+『8章【画像投稿機能を作ろう】復習』
+・Refileを追加する
+→sample_appフォルダ）直下にあるGemfileにRefileを追加する
+→サイズ調整など画像加工を行うgem（MiniMagick）も追加する
+
+・GemfileにRefileを追加する
+Gemfile
+...
+ 
+# 画像投稿用gem
+gem "refile", require: "refile/rails", github: 'manfe/refile'
+# 画像加工用（サイズ調整など）gem
+gem "refile-mini_magick"
+
+・ImageMagickをインストールする
+→Vagrant環境でインストールする
+→bundle installコマンドを実行する
+$ sudo apt-get update
+$ sudo apt-get -y install imagemagick libmagick++-dev
+$ bundle install
+
+・image_idカラムを追加する
+$ rails g migration AddImageIdToLists image_id:string
+$ rails db:migrate
+
+・attachmentメソッドを追加する
+app/models/list.rb
+class List < ApplicationRecord
+    attachment :image
+end
+
+・Strong Parametersに追加する
+app/controllers/todolist_controller.rb
+class TodolistController < ApplicationController
+  def new
+    @list = List.new
+  end
+  def create
+    list = List.new(list_params)
+    list.save
+    redirect_to todolist_path(list.id)
+  end
+  def index
+    @lists = List.all
+  end
+  def show
+    @list = List.find(params[:id])
+  end
+  def edit
+    @list = List.find(params[:id])
+  end
+  def update
+    list = List.find(params[:id])
+    list.update(list_params)
+    redirect_to todolist_path(list.id)
+  end
+ 
+  private
+  def list_params
+    params.require(:list).permit(:title, :body, :image)
+  end
+end
+
+・画像用のフィールドを追加する
+app/views/todolists/new.html.erb
+<h1>新規投稿</h1>
+<!-- form_for部分 -->
+<%= form_for(@list) do |f| %>
+ 
+  <h4>タイトル</h4>
+  <%= f.text_field :title %>
+ 
+  <h4>本文</h4>
+  <%= f.text_area :body %>
+ 
+  <!-- 追加部分 -->
+  <h4>画像</h4>
+  <%= f.attachment_field :image %>
+ 
+  <%= f.submit '投稿' %>
+ 
+<% end %>
+
+・attachment_image_tagを埋め込む
+→一覧画面（index）に記述する
+app/views/todolists/index.html.erb
+<h1>投稿一覧</h1>
+<% @lists.each do |list| %>
+  <p>タイトル</p>
+  <span>
+    <%=link_to list.title, todolist_path(list.id) %>
+  </span>
+  <p>画像</p>
+  <%= attachment_image_tag list, :image, :fill, 100, 100, format: 'jpeg' %>
+<% end %>
+
+→詳細ページ（show）に記述する
+app/views/todolists/show.html.erb
+<h2>タイトル</h2>
+<p><%= @list.title %></p>
+<h2>本文</h2>
+<p><%= @list.body %></p>
+<h2>画像</h2>
+<%= attachment_image_tag @list, :image, :fill, 300, 300, format: 'jpeg' %>
+ 
+<%= link_to "編集", edit_todolist_path(@list.id) %>　
+
+
+『9章【削除機能を作ろう】復習』
+・ルーティングを追加する
+config/routes.rb
+Rails.application.routes.draw do
+    get 'todolists/new'
+    # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
+    get 'top' => 'home#top'
+    post 'todolists' => 'todolists#create'
+    get 'todolists' => 'todolists#index'
+    get 'todolists/:id' => 'todolists#show', as: 'todolist'
+    get 'todolists/:id/edit' => 'todolists#edit', as: 'edit_todolist'
+    patch 'todolists/:id' => 'todolists#update', as: 'update_todolist'
+    delete 'todolists/:id' => 'todolists#destroy', as: 'destroy_todolist'
+end
+
+・destroyアクションを追加する
+app/controllers/todolists_controller.rb
+class TodolistsController < ApplicationController
+    def new
+        @list = List.new
+    end
+    def create
+        list = List.new(list_params)
+        list.save
+        redirect_to todolist_path(list.id)
+    end
+    def index
+        @lists = List.all
+    end
+    def show
+        @list = List.find(params[:id])
+    end
+    def edit
+        @list = List.find(params[:id])
+    end
+    def update
+        list = List.find(params[:id])
+        list.update(list_params)
+        redirect_to todolist_path(list.id)
+    end
+    def destroy
+    end
+ 
+    private
+    def list_params
+        params.require(:list).permit(:title, :body, :image)
+    end
+end
+
+・link_toのHTTPメソッドを指定する
+(<%=link_to '表示するテキスト', URL, method: :delete %>)
+
+・削除ボタンを設置する
+app/views/todolists/show.html.erb
+<h2>タイトル</h2>
+<p><%= @list.title %></p>
+<h2>本文</h2>
+<p><%= @list.body %></p>
+<h2>画像</h2>
+<%= attachment_image_tag @list, :image, :fill, 300, 300, format: 'jpeg' %>
+ 
+<%= link_to "編集", edit_todolist_path(@list.id) %>
+<%= link_to "削除", destroy_todolist_path(@list.id), method: :delete, "data-confirm" => "本当に削除しますか？" %>
+
+・削除リストをデータベースから削除する
+app/controllers/todolists_controller.rb
+class TodolistsController < ApplicationController
+    def new
+        @list = List.new
+    end
+    def create
+        list = List.new(list_params)
+        list.save
+        redirect_to todolist_path(list.id)
+    end
+    def index
+        @lists = List.all
+    end
+    def show
+        @list = List.find(params[:id])
+    end
+    def edit
+        @list = List.find(params[:id])
+    end
+    def update
+        list = List.find(params[:id])
+        list.update(list_params)
+        redirect_to todolist_path(list.id)
+    end
+    def destroy
+        list = List.find(params[:id]) #データ(レコード)を1件取得
+        list.destroy #データ（レコード）を削除
+        redirect_to todolists_path #List一覧画面へリダイレクト
+    end
+ 
+    private
+    def list_params
+        params.require(:list).permit(:title, :body, :image)
+    end
+end
+
+・ $ rails s -b 0.0.0.0
+
+

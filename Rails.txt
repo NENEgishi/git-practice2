@@ -1,0 +1,315 @@
+『Railsアプリのディレクトリ構成』
+『app』
+→実際に開発するRailsアプリケーションの主要ファイルが保存されています。
+
+ assets ： アプリケーションで使うCSSやJavaScript、
+画像ファイルが保存されています。
+
+assets/images ： 画像ファイルを保存
+
+assets/ javascripts ： JavaScriptファイルを保存
+
+assets/stylesheets ： CSSやSCSSファイルを保存
+
+ controllers ： MVCにおけるコントローラのファイルを保存しています。
+
+ models ： MVCにおけるモデルのファイルを保存しています。
+
+ views ： MVCにおけるビューのファイル（〜.html.erbと名のつくファイル）
+を保存しています。
+
+
+『bin』
+→Railsで使用されるコマンドの設定ファイルが入っています。中のファイルに
+変更を加えることはほとんどありません。
+
+
+『config』
+→Railsアプリケーションに関する設定ファイルが入っています。
+
+ database.yml ： データベースへの接続設定を記述するファイル
+ 
+ routes.rb ： ルーティングを設定するファイル
+ 
+initializers ： 初期化ファイルを保存
+
+
+『db』
+→データベースに関する設定ファイルを保存しています。
+
+ migrate ： マイグレーションファイル（データベース上のテーブルを作成・更新するために必要なファイル）を保存しています。
+
+
+『public』
+→サーバーにデプロイ（アプリケーションの設置）した後、Web上に公開されるファイルを保存しています。
+
+
+『test』
+→アプリケーションのテストに関するファイルを保存しています。
+
+
+『Railsの画面表示に必要なファイル』
+ routes.rb ： URLとコントローラ（アクション）を紐づける
+ controllers ： ユーザーからのリクエストを受け付ける司令塔
+ views ： Webページに表示される
+
+
+『RailsはMVCモデル（Model View Controller）で構成されている』
+ Model：アプリケーション固有のデータを扱う部分
+ View：PCの画面（ユーザインタフェース）に関わる部分
+ Controller：ModelやViewを統合的に制御する部分
+
+
+『Webアプリケーションでは、1ページを表示するための手順』
+1.Railsアプリケーションのひな形を作成する
+2.作成したフォルダへ移動する
+3.コントローラーを作成する
+
+4.アクションを定義する
+→コントローラに定義されている処理内容です。ユーザーが実際に呼び出して使います。
+コントローラは全体を統括して制御しているのに対し、アクションは制御内の一つひとつの処理を担当しています。
+
+5.ルーティングを設定する
+→ユーザが特定のURLにアクセスしたときに、どのコントローラのどのアクションに処理を振り分けるかを定義します。ルーティングは、URLとアクションを結びつける役目をしています。
+たとえば、「あるURLにアクセスがあったときに、rootコントローラのtopアクションの処理を振り分ける」定義を、ルーティングに記述します。
+
+6.ビューファイルを作成する
+
+モデルは、データベースとやり取りをする。 
+データベース内には、表形式の「テーブル」がある。 
+テーブルの横1行をレコード、縦1列をカラムという。 
+ モデルは単数形、テーブルは複数形で名前を付ける（Railsの命名規則）。
+7.アプリケーションサーバを起動する
+
+8.URLにアクセスする
+
+・モデルは、データベースとやり取りをする。 
+データベース内には、表形式の「テーブル」がある。 
+テーブルの横1行をレコード、縦1列をカラムという。 
+ モデルは単数形、テーブルは複数形で名前を付ける（Railsの命名規則）。
+
+
+class TodolistsController < ApplicationController
+  def new
+  	@list=List.new	←タイトル。この機能を行う上で＠を最初につけないと
+反応しない
+  end
+  def create ←設定
+  	list=List.new(list_params)
+  	list.save
+  	redirect_to '/top'
+  end
+  private
+  def list_params　←他のアクション（index,show,createなど）
+を巻き込まないようにするための内容を記述するためのもの。
+  	params.require(:list).permit(:title,:body)
+
+  end
+end
+
+・gemとは
+・Refileを追加する
+・Gemfileに追記する
+・ImageMagickをインストールする
+・Vagrant環境でインストールする
+・Cloud9環境でインストールする
+・bundle installコマンドを実行する
+・別の画面が表示された場合
+・読み込めなかった場合の修正方法
+・image_idカラムを追加する
+・データベースに反映させる
+・attachmentメソッドを追加する
+・Strong Parametersに追加する
+・画像用のフィールドを追加する
+・attachment_image_tagを埋め込む
+・一覧画面（index）に記述する
+・詳細ページ（show）に記述する
+・動作を確認する
+
+『一覧画面表示までの流れ』
+1）URLを入力→Routing 
+アドレスバーに「http://localhost:3000/todolists」と入力し、送信します。
+（リクエストはtodolists、HTTPメソッドはGET）
+
+2）Routing→Controller 
+ルーティングの指示によって、todolistsコントローラのindexアクションを確認します。 
+
+3）Controller←→Model
+コントローラにインスタンス変数を定義（@lists=List.all）することで、「すべての投稿データを取得してください」の指示をListモデルへ送信します。 
+
+4）Model←→データベース
+モデルがデータベースと通信し、指示のとおりにすべての投稿を取得し、@listsに保存します。
+
+5）Controller←→View
+インスタンス変数（@lists）がindex.html.erbファイルへ送られ、HTMLが作成されます。
+
+6）Controller→画面
+Viewで作成されたHTMLが、コントローラを経由してブラウザに送られ、
+表示されます。
+
+『詳細画面表示までの流れ 』
+1）「投稿」を押す 
+listsテーブルの各カラムに「title」「body」「image」を入力し、「投稿」を押して送信します。
+
+2）「投稿」を押す→Routing
+「投稿」を押すと、投稿フォームのリクエストが/todolists、HTTPメソッドがPOSTであることが確認されます。
+form_forでは、インスタンス変数の中身によってデフォルトの行き先が決まっています。復習しましょう。
+
+3）Routing→Controller
+ルーティングの指示によって、todolistsコントローラのcreateアクションにデータが送信されます。
+
+4）Controller→Model
+todolistsコントローラのcreateアクションでは、データベース保存用のインスタンス変数が設定され（@list=List.new(list_params)）、保存されます。
+
+5）Model→データベース
+コントローラの記述によって、モデルに指示が送信され、データが保存されます。
+
+6）Controller→Routing
+インスタンス変数.idのredirect_to todolist_pathの指定によって、保存後に投稿の詳細画面（todolistsコントローラのshowアクション）へ遷移するように指示を送信しています。
+なお、インスタンス変数では、名前付きパスprefixを使っています。Railsのルートで調べてみましょう。
+
+7）Routing→Controller
+ルーティングから、todolistsコントローラのshowアクションへリクエストが送信されます。
+画面遷移は、このタイミングで行われます。
+
+8）Controller←→Model
+View表示用のインスタンス変数を準備します。ここでは、List.find(params[:id])です（リクエストで送られるidの投稿を表示するため）。
+
+9）Model←→データベース
+指示によって、リクエストにあったidのデータが取得されます。
+
+10）Controller←→View
+インスタンス変数（@list）がViewのshowページに送られて、表示されます。
+
+11）Controller→画面
+コントローラを経由してブラウザに返され、結果のHTMLが画面上に表示されます。
+
+
+2020/2/12 
+・blogs_controller.rb内にあるdefの順番でprivate項目の内容は一番下に記述するべし。これの後に項目の記述を行ってはいけない。
+
+・カラム作成をする際に必ずポータルに ...
+$ rails g migration Removeカラム名Fromテーブル名 カラム名:型名
+を記入後、$ rails db:migrateを記入すること。
+すると、サブライムのmigrate(sample_app/app/db/migrate)の中に...
+
+class AddNameToBlogs < ActiveRecord::Migration[5.2]
+  def change
+    add_column :blogs, :title, :string
+    add_column :blogs, :category, :string
+    add_column :blogs, :body, :text
+  end
+end
+
+という形で反映される。
+
+・WEBページ反映の際の軸になるページというのが
+『コントローラ(今回homesという名前)』である。
+これを基準にどんどんurlを後から付け足していくことによりページに変化
+が生まれる。
+
+
+2020/2/15
+・ターミナルで、vagrantした後にファイル名を打って開けなかったら、
+exit→vagrant reload→vagrant ssh→cd /vagrantでcd ファイル名/をすると
+入れる。
+
+・ターミナルでカラムを作る際は先にdb:migrateをすること。
+
+・サーバーの立ち上げはこまめに行うこと
+
+・migrate/日時_create_lists.rbにカラムを追加で打ち込みそれを反映させるためにはdevelopment.sqliteをいったんデリートし、rails db:migrateすること。
+
+・作ったすぐ後に削除を実行するとエラーが出てしまう。
+
+・4章【モデルとデータベースを用意しよう】
+モデルの命名規則
+モデルとテーブルに関する命名規則は、以下のようになっています。
+この規則に従えば、テーブルとモデルの関係性がつながります。
+
+種類	　　　　　      概要	　　　　　　　　　　　　名前例
+モデル名	　　　　単数形、先頭は英大文字	　　　　List
+モデルのファイル名	単数形、先頭は英小文字	        list.rb
+テーブル名	        複数形、先頭は英小文字	　　　　lists
+
+・db:migrateしたときに反映されなかったらサブライムの中の
+スキーマが入力されていないということになるので、スキーマが出るまで
+db:migrateしたほうがいい。
+
+・createは、モデルの生成から保存をひとまとめに実行するメソッドなので、保存したい属性(カラム)をすべて引数で渡す必要があります。
+
+・生成したインスタンスを使って何か処理を行いたいという場合にはnewとsaveを使う
+
+・rails c(レイルズコンソール)を使ってエラーが起きたけどエラー文を見ても原因がわからないときなどは rails console を使ってみましょう。
+rails console を使えば、実装したコードを１行ずつ実行して結果を見ながらデバッグすることができます。そのため、どの行でなぜエラーが起きたのかという原因を突き止めやすくなります。
+
+・railsではcontrollerとroutesのミスが多い。
+この二つがしっかりしていないと、TOPページ(新規投稿記事)からの投稿した際の2ページ目が画面に反映されなくなってしまう。
+
+・createアクションは原則、インスタンス変数はつけない。
+ローカル変数とインスタンス変数の違い。
+
+・コントローラー名とモデル名は一緒のほうがいい。
+
+『Railsを学ぼう』
+3章【Railsでアプリケーションを開発しよう】
+http://localhost:3000/top
+5章【投稿機能を作ろう】
+http://localhost:3000/todolists/new
+6章【閲覧機能を作ろう】
+http://localhost:3000/todolists
+http://localhost:3000/todolists/1
+http://localhost:3000/todolists/new
+7章【編集機能を作ろう】
+http://localhost:3000/todolists/1
+8章【画像投稿機能を作ろう】
+http://localhost:3000/todolists/new
+9章【削除機能を作ろう】
+http://localhost:3000/todolists/1 
+
+『アプリケーションを完成させよう』
+2章【TOPページを作ろう】
+http://localhost:3000/blogs
+3章【投稿機能を作ろう】
+http://localhost:3000/blogs/new
+4章【Blog部分を書き換えよう】
+http://localhost:3000/blogs
+5章【詳細ページを作ろう】
+http://localhost:3000/blogs/1
+6章【編集機能を作ろう】
+http://localhost:3000/blogs/1/edit
+7章【削除機能を作ろう】
+http://localhost:3000/blogs/1
+8章【課題：アプリケーションを作成してみよう：基礎編】
+https://bookers-level1.herokuapp.com/
+
+2020/02/19
+Q:リダイレクトとルーティングの違い
+→
+・ルーティングの仕組み。ブラウザー→ルーティング→コントローラー→
+
+・コントローラー→ビューに行くときは変数の先頭に＠をつける傾向がある。
+
+・クリエイトにないのは、アクションの中で完結しているから。
+
+・パスをするときは必ずrails routesで中心に記述されている欄に書いてあるやつの後ろにある_pathをつける。
+
+コントローラーで_showアクションを追加する。
+showのviewを追加する。
+showアクションの中身とviewの中身を書く。
+railsを学ぼう6章をさんこうにする。
+booksを表示する。
+
+editアクションの作成。
+editのviewを作成する。
+updateアクションの作成。
+destroyアクションの作成。
+
+・インスタンス変数とローカル変数
+必要な分だけインスタンス変数を使用する。
+インスタンス変数はviewに表示したいとき。
+ローカル変数はそのクラス内でしか使わないとき。表示しない時。
+
+・findメソッドとIDを識別するメソッド。
+
+Q:indexのほうで八行目のbookの値をインスタンス変数にするべきかローカル変数にするべきか迷う
